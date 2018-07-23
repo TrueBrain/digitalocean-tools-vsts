@@ -1,14 +1,16 @@
 {
-  "name": "digitaloceanspacesupload",
+  "name": "digitaloceanspacesdelete",
   "private": true,
   "version": "0.0.0",
   "devDependencies": {
-    "@types/lodash": "^4.14.112"
+    "@types/lodash": "^4.14.112",
+    "@types/semver": "^5.5.0"
   },
   "dependencies": {
     "aws-sdk": "2.276.1",
     "lodash": "^4.17.10",
-    "pretty-bytes": "^5.1.0",
+    "matcher": "^1.1.1",
+    "semver": "^5.5.0",
     "vsts-task-lib": "2.6.0"
   }
 }

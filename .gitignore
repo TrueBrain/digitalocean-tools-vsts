@@ -257,5 +257,10 @@ Tasks/*/common/**/*.*
 Common/**/*.js
 Common/**/*.d.ts
 
+# Build output
+Tasks/*
+
+!.gitkeep
+
 .BuildOutput
 .DS_Store

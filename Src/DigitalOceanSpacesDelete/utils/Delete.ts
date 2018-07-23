@@ -3,7 +3,7 @@ import { isEmpty, sortedUniq, dropRight, includes } from 'lodash'
 import * as matcher from 'matcher'
 import * as semver from 'semver'
 import * as tl from 'vsts-task-lib'
-import { Spaces } from '../common/Spaces'
+import { Spaces } from 'BaseModule/Node/Spaces'
 import { Parameters } from './Parameters'
 
 export class Delete extends Spaces<Parameters> {
@@ -12,21 +12,10 @@ export class Delete extends Spaces<Parameters> {
   }
 
   public async init(): Promise<void> {
-    console.log(
-      tl.loc(
-        'DeletingFiles',
-        this.params.digitalTargetFolder
-          ? this.params.digitalTargetFolder
-          : 'root',
-        this.params.digitalBucket
-      )
-    )
-
     try {
       const listedObjects = await this.searchFiles()
 
       if (listedObjects.Contents.length === 0) {
-        console.log(tl.loc('FilesNotFound', this.params.digitalTargetFolder))
         return
       }
 
@@ -48,18 +37,7 @@ export class Delete extends Spaces<Parameters> {
       // WARNING: this parameter can enter inifite loop if Semver always clean all
       // versions from being deleted!
       if (listedObjects.IsTruncated) await this.init()
-
-      console.log(
-        tl.loc(
-          'DeletingFilesCompleted',
-          this.params.digitalTargetFolder
-            ? this.params.digitalTargetFolder
-            : 'root',
-          this.params.digitalBucket
-        )
-      )
     } catch (err) {
-      console.error(tl.loc('DeletingFilesFailed'), err)
       throw err
     }
   }
@@ -70,8 +48,6 @@ export class Delete extends Spaces<Parameters> {
   private filterFiles(
     listedObjects: S3.ListObjectsV2Output
   ): S3.ObjectIdentifier[] {
-    console.log(tl.loc('FilteringFiles', this.params.digitalGlobExpressions))
-
     const result: S3.ObjectIdentifier[] = listedObjects.Contents.map(
       ({ Key }) => {
         return { Key }
@@ -81,36 +57,16 @@ export class Delete extends Spaces<Parameters> {
       const itMatch = !isEmpty(
         matcher([Key], this.params.digitalGlobExpressions)
       )
-      if (itMatch) console.log(tl.loc('MatchedFile', Key))
       return itMatch
     })
 
-    if (isEmpty(result))
-      console.log(
-        tl.loc(
-          'FilesNotMatched',
-          this.params.digitalTargetFolder
-            ? this.params.digitalTargetFolder
-            : 'root'
-        )
-      )
-
-    return result
+    if (isEmpty(result)) return result
   }
 
   /**
    * Get all files in the target folder and return
    */
   private async searchFiles(): Promise<S3.ListObjectsV2Output> {
-    console.log(
-      tl.loc(
-        'SearchingFiles',
-        this.params.digitalTargetFolder
-          ? this.params.digitalTargetFolder
-          : 'root'
-      )
-    )
-
     const parameters: S3.ListObjectsV2Request = {
       Bucket: this.params.digitalBucket,
       Prefix: this.params.digitalTargetFolder,
@@ -134,8 +90,6 @@ export class Delete extends Spaces<Parameters> {
   private filterSemanticVersion(
     listedObjects: S3.ListObjectsV2Output
   ): S3.ObjectIdentifier[] {
-    console.log(tl.loc('SemverActive'))
-
     // Get version from Key and insert in a ordened list
     const versionList: string[] = sortedUniq(
       listedObjects.Contents.map(obj => {
@@ -153,18 +107,6 @@ export class Delete extends Spaces<Parameters> {
       versionList,
       this.params.digitalSemverKeepOnly
     )
-
-    if (isEmpty(filteredVersionList)) {
-      console.log(tl.loc('SemverKeepAll', versionList))
-    } else {
-      console.log(
-        tl.loc(
-          'SemverDelete',
-          this.params.digitalSemverKeepOnly,
-          filteredVersionList
-        )
-      )
-    }
 
     // Compare to the list, if not present, remove it from listedObjects to prevent from being deleted
     const filteredListObjects: S3.ObjectIdentifier[] = listedObjects.Contents.map(
